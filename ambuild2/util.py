@@ -407,6 +407,8 @@ def DecodeConsoleText(origin, text):
 def WriteEncodedText(fd, text):
   if not hasattr(fd, 'encoding') or fd.encoding == None:
     text = text.encode(locale.getpreferredencoding(), 'replace')
+  elif getattr(fd, 'encoding', None):
+    text = text.encode(fd.encoding)
   fd.write(text)
 
 class CmpOrderable(object):
