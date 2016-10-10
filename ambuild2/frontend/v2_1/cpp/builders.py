@@ -113,8 +113,8 @@ class ObjectFileBase(object):
     raise Exception("Must be implemented!")
 
 class PCHFile(ObjectFileBase):
-  def __init__(self, folderNode, compiler, headerFile, outputFile, argv):
-    super(PCHFile, self).__init__(folderNode, compiler, headerFile, outputFile)
+  def __init__(self, parent, inputObj, outputFile, compiler, argv):
+    super(PCHFile, self).__init__(parent, inputObj, outputFile)
     self.argv = argv
     self.behavior = compiler.vendor.behavior
 
@@ -200,10 +200,10 @@ class ObjectArgvBuilder(object):
     if extension == '.rc':
       return self.buildRcItem(inputObj, sourceFile, encodedName)
     if extension == '.h' or extension == '.hpp':
-      return self.buildPchItem(sourceFile, sourceName, cx)
+      return self.buildPchItem(inputObj, sourceFile, sourceName, cx)
     return self.buildCxxItem(inputObj, sourceFile, encodedName, extension)
 
-  def buildPchItem(self, headerFile, headerFileShort, cx):
+  def buildPchItem(self, inputObj, headerFile, headerFileShort, cx):
     pchFile = os.path.basename(headerFileShort) + self.vendor.pchSuffix
 
     cx.AddFolder(os.path.join(self.outputFolder, 'pch_c'))
@@ -211,11 +211,11 @@ class ObjectArgvBuilder(object):
 
     output_c = os.path.join('pch_c', pchFile)
     argv_c = self.cc_argv[:] + self.vendor.pchCArgs(headerFile, output_c)
-    pch_c = PCHFile(self.localFolderNode, self.compiler, headerFile, output_c, argv_c)
+    pch_c = PCHFile(self, inputObj, output_c, self.compiler, argv_c)
 
     output_cxx = os.path.join('pch_cxx', pchFile)
     argv_cxx = self.cxx_argv[:] + self.vendor.pchCxxArgs(headerFile, output_cxx)
-    pch_cxx = PCHFile(self.localFolderNode, self.compiler, headerFile, output_cxx, argv_cxx)
+    pch_cxx = PCHFile(self, inputObj, output_cxx, self.compiler, argv_cxx)
 
     return [pch_c, pch_cxx]
 
