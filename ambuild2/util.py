@@ -211,6 +211,9 @@ def decontinuate(text):
   if lines: yield ''.join(lines)
 
 def ParseGCCDeps(text):
+  if text == None:
+    text = ''
+
   deps = set()
 
   lines = decontinuate(text)

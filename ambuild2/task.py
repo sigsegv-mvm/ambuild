@@ -206,7 +206,7 @@ class WorkerChild(ChildProcessListener):
           os.mkfifo(d_path)
           env = os.environ.copy()
           env['SUNPRO_DEPENDENCIES'] = d_path
-          d_file = open(d_path, 'r+')
+          d_file = open(d_path, 'r+b', buffering=0)
           fcntl.fcntl(d_file, fcntl.F_SETFL, os.O_NONBLOCK)
           fcntl.fcntl(d_file, 1031, 1048576) # F_SETPIPE_SZ
 
