@@ -111,6 +111,8 @@ class WorkerChild(ChildProcessListener):
     response['id'] = 'results'
     response['pid'] = self.pid
     response['task_id'] = message['task_id']
+    response['task_type'] = message['task_type']
+    response['task_outputs'] = message['task_outputs']
     response['updates'] = new_timestamps
     self.channel.send(response)
 
@@ -503,15 +505,26 @@ class TaskMasterParent(ParentProcessListener):
       color = util.ConsoleGreen
     else:
       color = util.ConsoleRed
-    util.con_out(
-      util.ConsoleBlue,
-      '[{0}]'.format(message['pid']),
-      util.ConsoleNormal,
-      ' ',
-      color,
-      message['cmdline'],
-      util.ConsoleNormal
-    )
+    if self.cx.options.verbose:
+      util.con_out(
+        util.ConsoleBlue,
+        '[{0}]'.format(message['pid']),
+        util.ConsoleNormal,
+        ' ',
+        color,
+        message['cmdline'],
+        util.ConsoleNormal
+      )
+    else:
+      util.con_out(
+        util.ConsoleBlue,
+        '[{0}]'.format(message['pid']),
+        util.ConsoleNormal,
+        ' ',
+        color,
+        '{}: {}'.format(message['task_type'], ' '.join(message['task_outputs'])),
+        util.ConsoleNormal
+      )
     sys.stdout.flush()
 
     if len(message['stdout']):

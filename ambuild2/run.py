@@ -73,6 +73,8 @@ def BuildOptions():
                     help="Abort the build if the dependency graph would change.")
   parser.add_option('--new-project', dest="new_project", action="store_true", default=False,
                     help="Export a sample AMBuildScript in the current folder.")
+  parser.add_option("-v", "--verbose", dest="verbose", action="store_true", default=False,
+                    help="Print entire command line for each build operation.")
 
   options, argv = parser.parse_args()
 
