@@ -1,7 +1,7 @@
 # vim: set ts=8 sts=2 sw=2 tw=99 et:
 import errno
 import shutil
-import os, sys, fcntl
+import os, sys
 import traceback
 import multiprocessing as mp
 import tempfile
@@ -10,6 +10,9 @@ from ambuild2 import nodetypes
 from ambuild2.ipc import ParentProcessListener, ChildProcessListener
 from ambuild2.ipc import ProcessManager, MessageListener, Error
 from ambuild2.ipc import Channel
+
+if not util.IsWindows():
+  import fcntl
 
 class Task(object):
   def __init__(self, id, entry, outputs):
@@ -204,13 +207,14 @@ class WorkerChild(ChildProcessListener):
 
         if cc_type == 'gcc':
           d_path = tempfile.mktemp()
-#          print('{}'.format(d_path))
+          #print('{}'.format(d_path))
           os.mkfifo(d_path)
           env = os.environ.copy()
           env['SUNPRO_DEPENDENCIES'] = d_path
           d_file = open(d_path, 'r+b', buffering=0)
-          fcntl.fcntl(d_file, fcntl.F_SETFL, os.O_NONBLOCK)
-          fcntl.fcntl(d_file, 1031, 1048576) # F_SETPIPE_SZ
+          if not util.IsWindows():
+            fcntl.fcntl(d_file, fcntl.F_SETFL, os.O_NONBLOCK)
+            fcntl.fcntl(d_file, 1031, 1048576) # F_SETPIPE_SZ
 
         p, out, err = util.Execute(argv, env=env)
         if cc_type == 'gcc':
@@ -220,18 +224,18 @@ class WorkerChild(ChildProcessListener):
           except IOError as e:
             if e.errno != errno.EWOULDBLOCK:
               raise
-#          d_str = ''
-#          while True:
-#            try:
-#              chunk = d_file.read(64)
-#              if chunk == '':
-#                print('done')
-#                break
-#              print('loop: {} "{}"'.format(len(chunk), chunk))
-#              d_str += chunk
-#            except IOError as e:
-#              if e.errno != errno.EWOULDBLOCK:
-#                raise
+          #d_str = ''
+          #while True:
+          #  try:
+          #    chunk = d_file.read(64)
+          #    if chunk == '':
+          #      print('done')
+          #      break
+          #    print('loop: {} "{}"'.format(len(chunk), chunk))
+          #    d_str += chunk
+          #  except IOError as e:
+          #    if e.errno != errno.EWOULDBLOCK:
+          #      raise
           deps = util.ParseGCCDeps(d_str)
           d_file.close()
           os.unlink(d_path)
