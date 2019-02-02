@@ -100,9 +100,6 @@ class CompatGCC(Vendor):
   def formatInclude(self, outputPath, includePath):
     return ['-I', os.path.normpath(includePath)]
 
-  def objectArgs(self, sourceFile, objFile):
-    return ['-MP', '-fpch-deps', '-c', sourceFile, '-o', objFile]
-
   def parse_debuginfo(self, debuginfo):
     return debuginfo
 
@@ -124,6 +121,8 @@ class GCC(CompatGCC):
   def pchCxxArgs(self, headerFile, pchFile):
     return ['-MP', '-fpch-deps', '-x', 'c++-header', headerFile, '-o', pchFile]
 
+  def objectArgs(self, sourceFile, objFile):
+    return ['-MP', '-fpch-deps', '-c', sourceFile, '-o', objFile]
 
 class Clang(CompatGCC):
   def __init__(self, vendor_name, command, version):
@@ -134,6 +133,19 @@ class Clang(CompatGCC):
 
   def like(self, name):
     return name == 'gcc' or name == 'clang' or name == self.vendor_name
+
+  @property
+  def pchSuffix(self):
+    return '.pch'
+
+  def pchCArgs(self, headerFile, pchFile):
+    return ['-MP', '-x', 'c-header', headerFile, '-o', pchFile]
+
+  def pchCxxArgs(self, headerFile, pchFile):
+    return ['-MP', '-x', 'c++-header', headerFile, '-o', pchFile]
+
+  def objectArgs(self, sourceFile, objFile):
+    return ['-MP', '-c', sourceFile, '-o', objFile]
 
 class Emscripten(Clang):
   def __init__(self, command, version):
