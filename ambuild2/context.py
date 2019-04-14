@@ -30,6 +30,10 @@ class Context(object):
     self.cacheFolder = os.path.join(buildPath, '.ambuild2')
     self.dbpath = os.path.join(self.cacheFolder, 'graph')
 
+    self.tmppath = os.path.realpath(os.path.join(self.cacheFolder, 'temp'))
+    if not os.path.exists(self.tmppath):
+      os.mkdir(self.tmppath)
+
     # This doesn't completely work yet because it's not communicated to child
     # processes. We'll have to send a message down or up to fix this.
     if self.options.no_color:

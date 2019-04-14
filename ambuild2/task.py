@@ -48,10 +48,11 @@ class Task(object):
     return (' '.join([arg for arg in self.data]))
 
 class WorkerChild(ChildProcessListener):
-  def __init__(self, pump, channel, vars):
+  def __init__(self, pump, channel, tmp_path, vars):
     super(WorkerChild, self).__init__(pump, channel)
     self.buildPath = vars['buildPath']
     self.pid = os.getpid()
+    self.tmp_path = tmp_path
     self.vars = vars
     self.messageMap = {
       'task': lambda channel, message: self.receiveTask(channel, message)
@@ -205,7 +206,7 @@ class WorkerChild(ChildProcessListener):
     with util.FolderChanger(task_folder):
         env = None
         if cc_type == 'gcc':
-          d_path = tempfile.mktemp(prefix='ambuild_gccdeps_')
+          d_path = tempfile.mktemp(prefix='ambuild_gccdeps_', dir=self.tmp_path)
           env = os.environ.copy()
           env['SUNPRO_DEPENDENCIES'] = d_path
         p, out, err = util.Execute(argv, env=env)
@@ -281,7 +282,7 @@ class WorkerParent(ParentProcessListener):
 
 # The TaskMasterChild is in the same process as the WorkerParent.
 class TaskMasterChild(ChildProcessListener):
-  def __init__(self, pump, channel, task_graph, vars, num_processes):
+  def __init__(self, pump, channel, task_graph, tmp_path, vars, num_processes):
     super(TaskMasterChild, self).__init__(pump, channel)
     self.task_graph = task_graph
     self.outstanding = {}
@@ -297,7 +298,7 @@ class TaskMasterChild(ChildProcessListener):
       self.procman.spawn(
         WorkerParent(self),
         WorkerChild,
-        args=(vars,)
+        args=(tmp_path, vars,)
       )
 
     self.channel.send({
@@ -474,7 +475,7 @@ class TaskMasterParent(ParentProcessListener):
     self.taskMaster = cx.procman.spawn(
       self,
       TaskMasterChild,
-      args=(task_graph, cx.vars, num_processes)
+      args=(task_graph, cx.tmppath, cx.vars, num_processes)
     )
 
   def receiveDone(self, message):
