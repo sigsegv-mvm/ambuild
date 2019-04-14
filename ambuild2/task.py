@@ -204,41 +204,17 @@ class WorkerChild(ChildProcessListener):
 
     with util.FolderChanger(task_folder):
         env = None
-
         if cc_type == 'gcc':
-          d_path = tempfile.mktemp()
-          #print('{}'.format(d_path))
-          os.mkfifo(d_path)
+          d_path = tempfile.mktemp(prefix='ambuild_gccdeps_')
           env = os.environ.copy()
           env['SUNPRO_DEPENDENCIES'] = d_path
-          d_file = open(d_path, 'r+b', buffering=0)
-          if not util.IsWindows():
-            fcntl.fcntl(d_file, fcntl.F_SETFL, os.O_NONBLOCK)
-            fcntl.fcntl(d_file, 1031, 1048576) # F_SETPIPE_SZ
-
         p, out, err = util.Execute(argv, env=env)
         if cc_type == 'gcc':
           d_str = ''
-          try:
+          with open(d_path, 'r+b') as d_file:
             d_str = d_file.read()
-          except IOError as e:
-            if e.errno != errno.EWOULDBLOCK:
-              raise
-          #d_str = ''
-          #while True:
-          #  try:
-          #    chunk = d_file.read(64)
-          #    if chunk == '':
-          #      print('done')
-          #      break
-          #    print('loop: {} "{}"'.format(len(chunk), chunk))
-          #    d_str += chunk
-          #  except IOError as e:
-          #    if e.errno != errno.EWOULDBLOCK:
-          #      raise
-          deps = util.ParseGCCDeps(d_str)
-          d_file.close()
           os.unlink(d_path)
+          deps = util.ParseGCCDeps(d_str)
         elif cc_type == 'msvc':
           out, deps = util.ParseMSVCDeps(self.vars, out)
         elif cc_type == 'sun':
